@@ -14,8 +14,8 @@ import (
 )
 
 // NewAuthorizer returns the authorizer, uses a Casbin enforcer as input
-func NewAuthorizer(e *casbin.Enforcer) gin.HandlerFunc {
-	a := &BasicAuthorizer{enforcer: e}
+func NewAuthorizer(e *casbin.Enforcer, jwtKey []byte) gin.HandlerFunc {
+	a := &BasicAuthorizer{enforcer: e, jwtKey: jwtKey}
 
 	return func(c *gin.Context) {
 		if !a.CheckPermission(c.Request) {
