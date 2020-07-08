@@ -1,4 +1,4 @@
-module github.com/gin-contrib/authz
+module github.com/hebingchang/authz
 
 go 1.13
 
