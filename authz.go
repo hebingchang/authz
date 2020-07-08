@@ -5,6 +5,8 @@
 package authz
 
 import (
+	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"net/http"
 
 	"github.com/casbin/casbin/v2"
@@ -25,13 +27,31 @@ func NewAuthorizer(e *casbin.Enforcer) gin.HandlerFunc {
 // BasicAuthorizer stores the casbin handler
 type BasicAuthorizer struct {
 	enforcer *casbin.Enforcer
+	jwtKey   []byte
 }
 
 // GetUserName gets the user name from the request.
 // Currently, only HTTP basic authentication is supported
 func (a *BasicAuthorizer) GetUserName(r *http.Request) string {
-	username, _, _ := r.BasicAuth()
-	return username
+	tokenString := r.Header.Get("auth")
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return a.jwtKey, nil
+	})
+
+	if err != nil {
+		return ""
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims["grp"].(string)
+	} else {
+		return ""
+	}
 }
 
 // CheckPermission checks the user/method/path combination from the request.
